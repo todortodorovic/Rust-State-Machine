@@ -27,7 +27,7 @@ impl<T:Config> Pallet<T>
         *self.balances.get(who).unwrap_or(&T::Balance::zero())
     }
 
-    pub fn transfer(&mut self,caller:T::AccountId, to:T::AccountId,amount:T::Balance)->Result<(),&'static str>{
+    pub fn transfer(&mut self,caller:T::AccountId, to:T::AccountId,amount:T::Balance)->crate::support::DispatchResult{
         let caller_balance=self.balance(&caller);
         let to_balance=self.balance(&to);
 
@@ -41,6 +41,32 @@ impl<T:Config> Pallet<T>
     }
 
 }
+
+pub enum Call<T: Config> {
+	Transfer{to: T::AccountId,amount:T::Balance},
+}
+
+/// Implementation of the dispatch logic, mapping from `BalancesCall` to the appropriate underlying
+/// function we want to execute.
+impl<T: Config> crate::support::Dispatch for Pallet<T> {
+	type Caller = T::AccountId;
+	type Call = Call<T>;
+
+	fn dispatch(
+		&mut self,
+		caller: Self::Caller,
+		call: Self::Call,
+	) -> crate::support::DispatchResult {
+		match call {
+            Call::Transfer { to, amount }=>{
+                self.transfer(caller, to, amount)?;
+            },
+            
+        }
+        Ok(())
+	}
+}
+
 
 #[cfg(test)]
 mod tests{
