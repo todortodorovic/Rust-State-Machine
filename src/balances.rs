@@ -23,48 +23,28 @@ impl<T: Config> Pallet<T> {
 		*self.balances.get(who).unwrap_or(&T::Balance::zero())
 	}
 
-	pub fn transfer(
-		&mut self,
-		caller: T::AccountId,
-		to: T::AccountId,
-		amount: T::Balance,
-	) -> crate::support::DispatchResult {
-		let caller_balance = self.balance(&caller);
-		let to_balance = self.balance(&to);
 
-		let new_caller_balance = caller_balance.checked_sub(&amount).ok_or("Not enough funds.")?;
-		let new_to_balance = to_balance.checked_add(&amount).ok_or("Overflow")?;
-
-		self.balances.insert(caller, new_caller_balance);
-		self.balances.insert(to, new_to_balance);
-
-		Ok(())
-	}
 }
 
-pub enum Call<T: Config> {
-	Transfer { to: T::AccountId, amount: T::Balance },
-}
+#[macros::call]
+impl<T: Config>Pallet<T>{
+pub fn transfer(
+    &mut self,
+    caller: T::AccountId,
+    to: T::AccountId,
+    amount: T::Balance,
+) -> crate::support::DispatchResult {
+    let caller_balance = self.balance(&caller);
+    let to_balance = self.balance(&to);
 
-/// Implementation of the dispatch logic, mapping from `BalancesCall` to the appropriate underlying
-/// function we want to execute.
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-	type Caller = T::AccountId;
-	type Call = Call<T>;
+    let new_caller_balance = caller_balance.checked_sub(&amount).ok_or("Not enough funds.")?;
+    let new_to_balance = to_balance.checked_add(&amount).ok_or("Overflow")?;
 
-	fn dispatch(
-		&mut self,
-		caller: Self::Caller,
-		call: Self::Call,
-	) -> crate::support::DispatchResult {
-		match call {
-			Call::Transfer { to, amount } => {
-				self.transfer(caller, to, amount)?;
-			},
-		}
-		Ok(())
-	}
-}
+    self.balances.insert(caller, new_caller_balance);
+    self.balances.insert(to, new_to_balance);
+
+    Ok(())
+}}
 
 #[cfg(test)]
 mod tests {
